@@ -11,6 +11,7 @@ import {
 import { DitherField } from "@/components/ui/dither-field";
 import DashboardPreview from "@/components/dashboard-preview";
 import FeaturesSection from "@/components/feature-section";
+import FinalCta from "@/components/final-cta";
 
 const stats = [
   { label: "Topics covered", value: "12+" },
@@ -119,37 +120,7 @@ export default function Home() {
       <FeaturesSection />
 
       {/* Final CTA */}
-      <section className="relative mx-auto max-w-5xl px-5 pb-28">
-        <div className="relative overflow-hidden rounded-3xl border border-rose-900/10 bg-rose-900/[0.035] px-6 py-16 text-center dark:border-rose-400/10 dark:bg-rose-400/[0.035] sm:px-12">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -bottom-32 left-1/2 h-64 w-96 -translate-x-1/2 rounded-full bg-rose-600/10 blur-[80px]"
-          />
-
-          <div className="relative">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#810419] dark:text-rose-400">
-              Your journey starts here
-            </p>
-
-            <h2 className="mx-auto mt-4 max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">
-              Consistency beats intensity. Start building yours.
-            </h2>
-
-            <p className="mx-auto mt-4 max-w-lg text-sm leading-7 text-neutral-500 dark:text-neutral-400">
-              Take the first step towards becoming a better problem solver.
-              One question at a time.
-            </p>
-
-            <Link
-              href="/dashboard"
-              className="group mt-8 inline-flex items-center gap-2 rounded-full bg-[#810419] px-6 py-3 text-sm font-medium text-white shadow-[0_5px_25px_rgba(129,4,25,0.2)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(129,4,25,0.35)]"
-            >
-              Get started
-              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <FinalCta />
     </main>
   );
 }
