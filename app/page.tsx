@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { DitherField } from "@/components/ui/dither-field";
 import DashboardPreview from "@/components/dashboard-preview";
+import FeaturesSection from "@/components/feature-section";
 
 const stats = [
   { label: "Topics covered", value: "12+" },
@@ -60,8 +61,8 @@ export default function Home() {
       <DitherField className="relative isolate overflow-hidden" dotSize={0.5} intensity={0.3}>
         <div className="pointer-events-none absolute inset-0 z-0 bg-linear-to-b from-white/30 via-transparent to-white dark:from-neutral-950/30 dark:via-transparent dark:to-neutral-950" />
 
-        <section className="relative z-10 mx-auto flex max-w-6xl flex-col items-center px-5 pb-24 text-center">
-          <section className="relative mx-auto flex max-w-6xl flex-col items-center px-5 py-34 text-center sm:pt-44">
+        <section className="relative z-10 mx-auto flex max-w-6xl flex-col items-center px-5 text-center">
+          <section className="relative mx-auto flex max-w-6xl flex-col items-center px-5 pt-34 py-10 text-center sm:pt-44">
             <h1 className="max-w-4xl text-5xl font-semibold leading-[1.08] tracking-[-0.055em] sm:text-6xl md:text-7xl">
               Don't just solve problems.
               <span className="mt-2 block bg-linear-to-r from-[#810419] via-rose-600 to-rose-400 bg-clip-text text-transparent">
@@ -115,43 +116,7 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="relative mx-auto max-w-6xl px-5 py-24 sm:py-32">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#810419] dark:text-rose-400">
-            Everything in one place
-          </p>
-
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-            A smarter way to approach DSA.
-          </h2>
-
-          <p className="mt-4 text-sm leading-7 text-neutral-500 dark:text-neutral-400">
-            Less time figuring out what to do next. More time understanding,
-            practicing, and improving.
-          </p>
-        </div>
-
-        <div className="mt-14 grid gap-4 sm:grid-cols-2">
-          {features.map((feature, index) => (
-            <div
-              key={feature.title}
-              className="group rounded-2xl border border-neutral-200/80 bg-white/60 p-6 transition-all duration-300 hover:border-rose-900/20 hover:shadow-[0_10px_35px_rgba(129,4,25,0.07)] dark:border-white/10 dark:bg-neutral-900/40 dark:hover:border-rose-400/20 dark:hover:shadow-[0_10px_35px_rgba(244,63,94,0.07)]"
-            >
-              <div className="flex size-11 items-center justify-center rounded-xl bg-rose-900/6 text-[#810419] transition-all duration-300 group-hover:shadow-[0_0_18px_rgba(129,4,25,0.2)] dark:bg-rose-400/10 dark:text-rose-400">
-                <feature.icon className="size-5" />
-              </div>
-
-              <h3 className="mt-6 text-lg font-semibold tracking-tight">
-                {feature.title}
-              </h3>
-
-              <p className="mt-2 max-w-md text-sm leading-7 text-neutral-500 dark:text-neutral-400">
-                {feature.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+      <FeaturesSection />
 
       {/* Final CTA */}
       <section className="relative mx-auto max-w-5xl px-5 pb-28">
