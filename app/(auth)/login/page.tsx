@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Eye,
@@ -13,16 +15,100 @@ import {
   Check,
 } from "lucide-react";
 import { DitherField } from "@/components/ui/dither-field";
+import { useSignIn } from "@clerk/nextjs";
 
 export default function LoginPage() {
+  const { signIn, fetchStatus } = useSignIn();
+  const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleLogin = (e: React.SyntheticEvent<HTMLFormElement>) => {
+  const isSubmitting = fetchStatus === "fetching";
+
+  const { isLoaded, isSignedIn } = useAuth();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace("/dashboard");
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  const handleLogin = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Integrate your authentication logic here.
+
+    setErrorMessage("");
+
+    try {
+      // Authenticate using Clerk
+      const { error } = await signIn.password({
+        emailAddress: email.trim(),
+        password,
+      });
+
+      if (error) {
+        setErrorMessage(error.message || "Unable to sign in.");
+        return;
+      }
+
+      // Authentication successful
+      if (signIn.status === "complete") {
+        await signIn.finalize({
+          navigate: ({ session, decorateUrl }) => {
+            if (session?.currentTask) {
+              setErrorMessage(
+                "Your account requires an additional step before you can continue."
+              );
+              return;
+            }
+
+            const url = decorateUrl("/");
+
+            if (url.startsWith("http")) {
+              window.location.href = url;
+            } else {
+              router.push(url);
+            }
+          },
+        });
+
+        return;
+      }
+
+      // Additional verification may be required
+      if (signIn.status === "needs_second_factor") {
+        setErrorMessage(
+          "Additional verification is required. Please complete your second-factor authentication."
+        );
+        return;
+      }
+
+      if (signIn.status === "needs_client_trust") {
+        setErrorMessage(
+          "This device needs verification before you can sign in."
+        );
+        return;
+      }
+
+      setErrorMessage("Unable to complete sign-in. Please try again.");
+    } catch (error) {
+      console.error("Login error:", error);
+
+      setErrorMessage(
+        "Something went wrong. Please try again in a moment."
+      );
+    }
   };
+
+  if (!isLoaded || isSignedIn) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-white dark:bg-neutral-950">
+        <div className="size-8 animate-spin rounded-full border-2 border-rose-900/20 border-t-[#810419]" />
+      </main>
+    );
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-white text-neutral-950 dark:bg-neutral-950 dark:text-white">
@@ -229,28 +315,26 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Remember me */}
-                <div className="flex items-center gap-2">
-                  <input
-                    id="remember"
-                    type="checkbox"
-                    className="size-3.5 accent-[#810419]"
-                  />
-                  <label
-                    htmlFor="remember"
-                    className="text-xs text-neutral-500 dark:text-neutral-400"
+                {errorMessage && (
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-600 dark:text-red-400"
                   >
-                    Remember me
-                  </label>
-                </div>
+                    {errorMessage}
+                  </div>
+                )}
 
                 {/* Submit */}
                 <button
                   type="submit"
-                  className="group flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#810419] text-sm font-medium text-white shadow-[0_5px_25px_rgba(129,4,25,0.2)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#690316] hover:shadow-[0_8px_30px_rgba(129,4,25,0.3)]"
+                  disabled={isSubmitting}
+                  className="group flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#810419] text-sm font-medium text-white shadow-[0_5px_25px_rgba(129,4,25,0.2)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#690316] hover:shadow-[0_8px_30px_rgba(129,4,25,0.3)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
-                  Sign in
-                  <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  {isSubmitting ? "Signing in..." : "Sign in"}
+
+                  {!isSubmitting && (
+                    <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  )}
                 </button>
 
               </form>
@@ -270,10 +354,10 @@ export default function LoginPage() {
                 className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-neutral-200 bg-white text-sm font-medium transition-all hover:bg-neutral-50 dark:border-white/10 dark:bg-white/2 dark:hover:bg-white/5"
               >
                 <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.05 5.05 0 0 1-2.2 3.31v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.09Z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.28-1.93-6.15-4.53H2.16v2.84A11 11 0 0 0 12 23Z"/>
-                  <path fill="#FBBC05" d="M5.85 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.16a11 11 0 0 0 0 9.88l3.69-2.84Z"/>
-                  <path fill="#EA4335" d="M12 4.36c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45.99 14.97 0 12 0a11 11 0 0 0-9.84 7.06l3.69 2.84c.87-2.6 3.29-4.54 6.15-4.54Z"/>
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.05 5.05 0 0 1-2.2 3.31v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.09Z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.28-1.93-6.15-4.53H2.16v2.84A11 11 0 0 0 12 23Z" />
+                  <path fill="#FBBC05" d="M5.85 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.16a11 11 0 0 0 0 9.88l3.69-2.84Z" />
+                  <path fill="#EA4335" d="M12 4.36c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45.99 14.97 0 12 0a11 11 0 0 0-9.84 7.06l3.69 2.84c.87-2.6 3.29-4.54 6.15-4.54Z" />
                 </svg>
                 Continue with Google
               </button>
