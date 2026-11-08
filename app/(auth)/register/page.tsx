@@ -15,8 +15,13 @@ import {
   Check,
 } from "lucide-react";
 import { DitherField } from "@/components/ui/dither-field";
+import { useSignUp } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
+  const { signUp } = useSignUp();
+  const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -27,23 +32,164 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleRegister = (e: React.FormEvent<HTMLFormElement>) => {
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+
+  const handleRegister = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+    setHasSubmitted(true);
+    setErrorMessage("");
+
+    if (!validateForm()) {
       return;
     }
 
-    // Integrate your registration logic here.
-    console.log({
-      firstName,
-      lastName,
-      email,
-      username,
-      password,
-    });
+    setErrorMessage("");
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMessage("Password must contain at least 8 characters.");
+      return;
+    }
+
+    try {
+      // 1. Create the Clerk sign-up attempt.
+      const { error: createError } = await signUp.create({
+        firstName,
+        lastName,
+        emailAddress: email,
+        username,
+        password,
+      });
+
+      if (createError) {
+        setErrorMessage(createError.message);
+        return;
+      }
+
+      // 2. Send email verification link
+      const { error: emailError } =
+        await signUp.verifications.sendEmailLink({
+          verificationUrl: `${window.location.origin}/register/verify-email`,
+        });
+
+      if (emailError) {
+        setErrorMessage(emailError.message);
+        return;
+      }
+
+      // 3. Keep the original registration page alive
+      setIsVerifying(true);
+      setIsSubmitting(false);
+
+      // 4. Wait for verification
+      const { error: verificationError } =
+        await signUp.verifications.waitForEmailLinkVerification();
+
+      if (verificationError) {
+        setErrorMessage(verificationError.message);
+        setIsVerifying(false);
+        return;
+      }
+
+      // 5. Check whether sign-up is complete
+      if (signUp.status !== "complete") {
+        setErrorMessage(
+          `Registration incomplete. Current status: ${signUp.status}`
+        );
+        setIsVerifying(false);
+        return;
+      }
+
+      // 6. Finalize and activate the session
+      const { error: finalizeError } = await signUp.finalize({
+        navigate: ({ session, decorateUrl }) => {
+          if (session?.currentTask) {
+            console.log("Pending session task:", session.currentTask);
+            return;
+          }
+
+          const url = decorateUrl("/dashboard");
+
+          if (url.startsWith("http")) {
+            window.location.href = url;
+          } else {
+            router.push(url);
+          }
+        },
+      });
+
+      if (finalizeError) {
+        setErrorMessage(finalizeError.message);
+      }
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again."
+      );
+      setIsVerifying(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!firstName.trim()) {
+      newErrors.firstName = "First name is required.";
+    }
+
+    if (!lastName.trim()) {
+      newErrors.lastName = "Last name is required.";
+    }
+
+    if (!email.trim()) {
+      newErrors.email = "Email address is required.";
+    }
+
+    if (!username.trim()) {
+      newErrors.username = "Username is required.";
+    } else if (username.trim().length < 4) {
+      newErrors.username = "Username must contain at least 3 characters.";
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required.";
+    } else if (password.length < 8) {
+      newErrors.password = "Password must contain at least 8 characters.";
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password.";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match.";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  function FieldError({ message }: { message?: string }) {
+    if (!message) return null;
+
+    return (
+      <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+        {message}
+      </p>
+    );
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-white text-neutral-950 dark:bg-neutral-950 dark:text-white py-20">
@@ -177,6 +323,12 @@ export default function RegisterPage() {
                 </p>
               </div>
 
+              {errorMessage && (
+                <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+                  {errorMessage}
+                </div>
+              )}
+
               <form
                 onSubmit={handleRegister}
                 className="mt-2 space-y-4 lg:mt-8"
@@ -186,7 +338,7 @@ export default function RegisterPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label htmlFor="firstName" className="mb-2 block text-sm font-medium">
-                      First name
+                      First name <span className="text-red-500">*</span>
                     </label>
 
                     <div className="relative">
@@ -199,15 +351,28 @@ export default function RegisterPage() {
                         required
                         placeholder="John"
                         value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
+                        onChange={(e) => {
+                          setFirstName(e.target.value);
+
+                          if (hasSubmitted) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              firstName: e.target.value.trim()
+                                ? ""
+                                : "First name is required.",
+                            }));
+                          }
+                        }}
                         className="h-12 w-full rounded-xl border border-neutral-200 bg-neutral-50/70 pl-10 pr-3 text-sm outline-none transition-all placeholder:text-neutral-400 focus:border-rose-800/50 focus:ring-4 focus:ring-rose-900/5 dark:border-white/10 dark:bg-white/3 dark:focus:border-rose-400/50 dark:focus:ring-rose-400/5"
                       />
                     </div>
+
+                    <FieldError message={errors.firstName} />
                   </div>
 
                   <div>
                     <label htmlFor="lastName" className="mb-2 block text-sm font-medium">
-                      Last name
+                      Last name <span className="text-red-500">*</span>
                     </label>
 
                     <div className="relative">
@@ -220,17 +385,30 @@ export default function RegisterPage() {
                         required
                         placeholder="Doe"
                         value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
+                        onChange={(e) => {
+                          setLastName(e.target.value);
+
+                          if (hasSubmitted) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              lastName: e.target.value.trim()
+                                ? ""
+                                : "Last name is required.",
+                            }));
+                          }
+                        }}
                         className="h-12 w-full rounded-xl border border-neutral-200 bg-neutral-50/70 pl-10 pr-3 text-sm outline-none transition-all placeholder:text-neutral-400 focus:border-rose-800/50 focus:ring-4 focus:ring-rose-900/5 dark:border-white/10 dark:bg-white/3 dark:focus:border-rose-400/50 dark:focus:ring-rose-400/5"
                       />
                     </div>
+
+                    <FieldError message={errors.lastName} />
                   </div>
                 </div>
 
                 {/* Email */}
                 <div>
                   <label htmlFor="email" className="mb-2 block text-sm font-medium">
-                    Email address
+                    Email address <span className="text-red-500">*</span>
                   </label>
 
                   <div className="relative">
@@ -243,16 +421,29 @@ export default function RegisterPage() {
                       required
                       placeholder="you@example.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+
+                        if (hasSubmitted) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            email: e.target.value.trim()
+                              ? ""
+                              : "Email is required.",
+                          }));
+                        }
+                      }}
                       className="h-12 w-full rounded-xl border border-neutral-200 bg-neutral-50/70 pl-11 pr-4 text-sm outline-none transition-all placeholder:text-neutral-400 focus:border-rose-800/50 focus:ring-4 focus:ring-rose-900/5 dark:border-white/10 dark:bg-white/3 dark:focus:border-rose-400/50 dark:focus:ring-rose-400/5"
                     />
                   </div>
+
+                  <FieldError message={errors.email} />
                 </div>
 
                 {/* Username */}
                 <div>
                   <label htmlFor="username" className="mb-2 block text-sm font-medium">
-                    Username
+                    Username <span className="text-red-500">*</span>
                   </label>
 
                   <div className="relative">
@@ -266,16 +457,29 @@ export default function RegisterPage() {
                       minLength={3}
                       placeholder="johndoe"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+
+                        if (hasSubmitted) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            username: e.target.value.trim()
+                              ? ""
+                              : "Username is required.",
+                          }));
+                        }
+                      }}
                       className="h-12 w-full rounded-xl border border-neutral-200 bg-neutral-50/70 pl-11 pr-4 text-sm outline-none transition-all placeholder:text-neutral-400 focus:border-rose-800/50 focus:ring-4 focus:ring-rose-900/5 dark:border-white/10 dark:bg-white/3 dark:focus:border-rose-400/50 dark:focus:ring-rose-400/5"
                     />
                   </div>
+
+                  <FieldError message={errors.username} />
                 </div>
 
                 {/* Password */}
                 <div>
                   <label htmlFor="password" className="mb-2 block text-sm font-medium">
-                    Password
+                    Password <span className="text-red-500">*</span>
                   </label>
 
                   <div className="relative">
@@ -289,7 +493,18 @@ export default function RegisterPage() {
                       minLength={8}
                       placeholder="Create a password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+
+                        if (hasSubmitted) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            password: e.target.value.trim()
+                              ? ""
+                              : "Password is required.",
+                          }));
+                        }
+                      }}
                       className="h-12 w-full rounded-xl border border-neutral-200 bg-neutral-50/70 pl-11 pr-12 text-sm outline-none transition-all placeholder:text-neutral-400 focus:border-rose-800/50 focus:ring-4 focus:ring-rose-900/5 dark:border-white/10 dark:bg-white/3 dark:focus:border-rose-400/50 dark:focus:ring-rose-400/5"
                     />
 
@@ -306,12 +521,32 @@ export default function RegisterPage() {
                       )}
                     </button>
                   </div>
+
+                  <div className="mt-2 flex items-center gap-2">
+                    <Check
+                      className={`size-3.5 ${password.length >= 8
+                        ? "text-green-600"
+                        : "text-neutral-400"
+                        }`}
+                    />
+
+                    <p
+                      className={`text-xs ${password.length >= 8
+                        ? "text-green-600"
+                        : "text-neutral-400"
+                        }`}
+                    >
+                      At least 8 characters
+                    </p>
+                  </div>
+
+                  <FieldError message={errors.password} />
                 </div>
 
                 {/* Confirm password */}
                 <div>
                   <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium">
-                    Confirm password
+                    Confirm password <span className="text-red-500">*</span>
                   </label>
 
                   <div className="relative">
@@ -324,7 +559,18 @@ export default function RegisterPage() {
                       required
                       placeholder="Confirm your password"
                       value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+
+                        if (hasSubmitted) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            confirmPassword: e.target.value.trim()
+                              ? ""
+                              : "Confirm Password field is required.",
+                          }));
+                        }
+                      }}
                       className="h-12 w-full rounded-xl border border-neutral-200 bg-neutral-50/70 pl-11 pr-12 text-sm outline-none transition-all placeholder:text-neutral-400 focus:border-rose-800/50 focus:ring-4 focus:ring-rose-900/5 dark:border-white/10 dark:bg-white/3 dark:focus:border-rose-400/50 dark:focus:ring-rose-400/5"
                     />
 
@@ -341,17 +587,25 @@ export default function RegisterPage() {
                       )}
                     </button>
                   </div>
+
+                  <FieldError message={errors.confirmPassword} />
                 </div>
 
                 {/* Submit */}
                 <button
                   type="submit"
                   className="group mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#810419] text-sm font-medium text-white shadow-[0_5px_25px_rgba(129,4,25,0.2)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#690316] hover:shadow-[0_8px_30px_rgba(129,4,25,0.3)]"
+                  disabled={isSubmitting || isVerifying}
                 >
-                  Create account
+                  {isSubmitting
+                    ? "Creating account..."
+                    : isVerifying
+                      ? "Waiting for email verification..."
+                      : "Create account"}
                   <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </button>
 
+                <div id="clerk-captcha" />
               </form>
 
               {/* Terms */}
