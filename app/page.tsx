@@ -1,13 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ArrowRight,
-  BrainCircuit,
-  Flame,
-  Layers3,
-  Target,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { DitherField } from "@/components/ui/dither-field";
 import DashboardPreview from "@/components/dashboard-preview";
 import FeaturesSection from "@/components/feature-section";
@@ -17,33 +11,6 @@ const stats = [
   { label: "Topics covered", value: "12+" },
   { label: "Structured learning", value: "01" },
   { label: "Daily consistency", value: "∞" },
-];
-
-const features = [
-  {
-    icon: Layers3,
-    title: "Structured sheets",
-    description:
-      "Explore carefully organized DSA questions, grouped by topics and difficulty.",
-  },
-  {
-    icon: BrainCircuit,
-    title: "Learn progressively",
-    description:
-      "Move forward with recommendations that reflect your learning progress.",
-  },
-  {
-    icon: Target,
-    title: "Knowledge hub",
-    description:
-      "Keep solutions, explanations, and useful learning resources in one place.",
-  },
-  {
-    icon: Flame,
-    title: "Build consistency",
-    description:
-      "Track your streaks, maintain momentum, and turn daily practice into a habit.",
-  },
 ];
 
 export default function Home() {

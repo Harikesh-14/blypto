@@ -18,7 +18,7 @@ const columns = [
   },
   {
     title: "Account",
-    links: [{ title: "Log in", href: "/login" }],
+    links: [{ title: "Profile", href: "/profile" }],
   },
 ] as const;
 
@@ -79,7 +79,7 @@ export default function Footer() {
       <div
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[28rem] bg-[radial-gradient(ellipse_at_50%_100%,rgba(190,18,60,0.16),transparent_65%)] transition-opacity duration-1000 dark:bg-[radial-gradient(ellipse_at_50%_100%,rgba(225,29,72,0.22),transparent_65%)]",
+          "pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-112 bg-[radial-gradient(ellipse_at_50%_100%,rgba(190,18,60,0.16),transparent_65%)] transition-opacity duration-1000 dark:bg-[radial-gradient(ellipse_at_50%_100%,rgba(225,29,72,0.22),transparent_65%)]",
           inView ? "opacity-100" : "opacity-0",
         )}
       />
@@ -185,7 +185,7 @@ export default function Footer() {
         onMouseMove={onMove}
         aria-hidden
         className={cn(
-          "group/mark relative mx-auto -mb-[0.06em] max-w-7xl overflow-hidden px-2 transition-all duration-1000 ease-out motion-reduce:transition-none",
+          "group/mark relative mx-auto mb-[-0.06em] max-w-7xl overflow-hidden px-2 transition-all duration-1000 ease-out motion-reduce:transition-none",
           inView ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0",
         )}
         style={{ transitionDelay: "400ms" }}
@@ -194,7 +194,7 @@ export default function Footer() {
         <span
           className={cn(
             wordmark,
-            "bg-linear-to-b from-neutral-900/[0.14] via-neutral-900/[0.05] to-transparent bg-clip-text text-transparent dark:from-white/[0.16] dark:via-white/[0.05]",
+            "bg-linear-to-b from-neutral-900/[0.14] via-neutral-900/5 to-transparent bg-clip-text text-transparent dark:from-white/16 dark:via-white/5",
           )}
         >
           Blypto
