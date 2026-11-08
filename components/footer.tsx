@@ -53,9 +53,6 @@ const rise = (inView: boolean, delay: number) => ({
   style: { transitionDelay: `${delay}ms` },
 });
 
-const wordmark =
-  "block select-none text-center font-semibold leading-[0.8] tracking-[-0.07em] text-[clamp(5.5rem,24vw,18rem)]";
-
 export default function Footer() {
   const [ref, inView] = useInView<HTMLElement>(0.15);
   const [year, setYear] = useState<number | null>(null);
@@ -63,12 +60,6 @@ export default function Footer() {
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);
-
-  const onMove = (e: MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--mx", `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
-  };
 
   const toTop = () => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -107,7 +98,7 @@ export default function Footer() {
               src="/blypto_logo.png"
               width={30}
               height={30}
-              className="rounded-lg transition-transform duration-300 group-hover:rotate-[-8deg] group-hover:scale-105"
+              className="rounded-lg transition-transform duration-300 group-hover:rotate-[-8deg] group-hover:scale-105 w-auto object-contain"
             />
             <span className="text-lg font-semibold tracking-tight">Blypto</span>
           </Link>
@@ -183,43 +174,6 @@ export default function Footer() {
             </span>
           </button>
         </div>
-      </div>
-
-      {/* Giant wordmark */}
-      <div
-        onMouseMove={onMove}
-        aria-hidden
-        className={cn(
-          "group/mark relative mx-auto mb-[-0.06em] max-w-7xl overflow-hidden px-2 transition-all duration-1000 ease-out motion-reduce:transition-none",
-          inView ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0",
-        )}
-        style={{ transitionDelay: "400ms" }}
-      >
-        {/* Base: faint, fades out downward */}
-        <span
-          className={cn(
-            wordmark,
-            "bg-linear-to-b from-neutral-900/[0.14] via-neutral-900/5 to-transparent bg-clip-text text-transparent dark:from-white/16 dark:via-white/5",
-          )}
-        >
-          Blypto
-        </span>
-
-        {/* Crimson layer revealed around the cursor */}
-        <span
-          className={cn(
-            wordmark,
-            "pointer-events-none absolute inset-x-2 top-0 bg-linear-to-b from-[#810419] via-rose-600 to-rose-400/10 bg-clip-text text-transparent opacity-0 transition-opacity duration-300 group-hover/mark:opacity-100",
-          )}
-          style={{
-            maskImage:
-              "radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), black, transparent 70%)",
-            WebkitMaskImage:
-              "radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), black, transparent 70%)",
-          }}
-        >
-          Blypto
-        </span>
       </div>
     </footer>
   );

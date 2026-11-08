@@ -158,7 +158,7 @@ export default function Header() {
               width={36}
               height={36}
               priority
-              className="rounded-full transition-transform duration-300 group-hover:scale-105"
+              className="rounded-full transition-transform duration-300 group-hover:scale-105 w-auto object-contain"
             />
 
             <span className="text-[15px] font-semibold tracking-tight text-neutral-900 dark:text-white">
@@ -182,7 +182,7 @@ export default function Header() {
                   className={cn(
                     "rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all duration-300",
                     active
-                      ? "bg-[#810419]/10 text-[#810419] dark:bg-rose-500/15 dark:text-rose-400"
+                      ? "text-[#810419] dark:text-rose-400"
                       : "text-neutral-500 hover:text-[#810419] hover:drop-shadow-[0_0_8px_rgba(129,4,25,0.65)] dark:text-neutral-400 dark:hover:text-rose-400 dark:hover:drop-shadow-[0_0_8px_rgba(251,113,133,0.8)]",
                   )}
                 >
@@ -239,7 +239,6 @@ export default function Header() {
                   aria-hidden={!profileOpen}
                   className={cn(
                     "absolute right-0 top-full z-50 mt-3 w-72 origin-top-right",
-                    // gradient edge, same as the dashboard preview
                     "rounded-[18px] bg-linear-to-b from-neutral-200 via-neutral-200/40 to-transparent p-px",
                     "dark:from-white/20 dark:via-white/5",
                     "shadow-[0_20px_60px_rgba(0,0,0,0.14)] dark:shadow-[0_20px_70px_rgba(0,0,0,0.65)]",
@@ -260,17 +259,14 @@ export default function Header() {
                     <div
                       className={cn(
                         "relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-3.5",
-                        "bg-linear-to-br from-rose-900/6 via-rose-900/2 to-transparent",
-                        "dark:from-rose-400/9 dark:via-rose-400/3",
                         "transition-all duration-300 ease-out motion-reduce:transition-none",
                         profileOpen ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
                       )}
                     >
                       <div
                         aria-hidden
-                        className="pointer-events-none absolute -top-10 -right-10 size-28 rounded-full bg-rose-600/15 blur-3xl"
+                        className="pointer-events-none absolute -top-10 -right-10 size-28 rounded-full blur-3xl"
                       />
-
                       {/* Avatar with brand-gradient ring */}
                       <div className="relative shrink-0 rounded-full bg-linear-to-br from-[#810419] via-rose-600 to-rose-400 p-0.5">
                         {user.imageUrl ? (
