@@ -58,6 +58,11 @@ const wordmark =
 
 export default function Footer() {
   const [ref, inView] = useInView<HTMLElement>(0.15);
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
 
   const onMove = (e: MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -163,7 +168,7 @@ export default function Footer() {
           )}
         >
           <p className="text-xs text-neutral-400">
-            © {new Date().getFullYear()} Blypto. All rights reserved.
+            © {year ?? "2026"} Blypto. All rights reserved.
           </p>
 
           <button
