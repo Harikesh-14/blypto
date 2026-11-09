@@ -1,8 +1,8 @@
-import ProfileAccount from "@/components/profile-account";
-import ProfileAchievements from "@/components/profile-achievement";
-import ProfileGoals from "@/components/profile-goal";
-import ProfileHeader from "@/components/profile-header";
-import ProfileStats from "@/components/profile-stats";
+import ProfileAccount from "@/components/profile/profile-account";
+import ProfileAchievements from "@/components/profile/profile-achievement";
+import ProfileGoals from "@/components/profile/profile-goal";
+import ProfileHeader from "@/components/profile/profile-header";
+import ProfileStats from "@/components/profile/profile-stats";
 
 export default function ProfilePage() {
   return (
